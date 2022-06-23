@@ -1,0 +1,35 @@
+version: '3.1'
+
+services:
+
+  traefik:
+    image: traefik:v1.7
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    networks:
+      - proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./traefik/traefik.toml:/traefik.toml
+      - ./traefik/acme.json:/acme.json
+    container_name: traefik
+
+  nginx:
+    image: nginx
+    restart: always
+      #volumes:
+      #- ./site:/etc/nginx/html:ro
+      #- ./nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
+      #- certs:/etc/letsencrypt:ro
+    labels:
+      - "traefik.docker.network=proxy"
+      - "traefik.basic.frontend.rule=Host:les-bebous.fun"
+      - "traefik.basic.protocol=http"
+    networks:
+      proxy:
+
+networks:
+  proxy:
+    external: true

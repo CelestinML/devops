@@ -1,0 +1,28 @@
+services:
+
+  nginx:
+    image: nginx
+    ports:
+      - 80:80/tcp
+      - 443:443/tcp
+    volumes:
+      - ./site:/etc/nginx/html:ro
+        #- ./nginx/les-bebous.fun:/etc/nginx/sites-available/default:ro
+      - ./nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
+      - certs:/etc/letsencrypt:ro
+    networks:
+      default:
+
+  cert:
+    build:
+      context: ./cert
+      dockerfile: Dockerfile
+    volumes:
+      - ./cert/ovh.ini:/ovh/ovh.ini:ro
+      - certs:/etc/letsencrypt
+    networks:
+      default:
+    command: certbot certonly --dns-ovh --register-unsafely-without-email --non-interactive --agree-tos --dns-ovh-credentials /ovh/ovh.ini -d les-bebous.fun
+
+volumes:
+  certs:

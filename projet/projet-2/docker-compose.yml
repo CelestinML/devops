@@ -1,0 +1,18 @@
+services:
+  whoami:
+    image: containous/whoami
+    networks:
+      back:
+    scale: 5
+
+  nginx:
+    image: nginx
+    networks:
+      back:
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    ports:
+      - 4080:80/tcp
+
+networks:
+  back:
