@@ -1,35 +1,40 @@
-version: '3.1'
+version: "3.3"
 
 services:
 
   traefik:
-    image: traefik:v1.7
-    restart: always
+    image: "traefik:v2.7"
+    container_name: "traefik"
+    command:
+      - "--log.level=DEBUG"
+      - "--api.insecure=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge=true"
+      - "--certificatesresolvers.myresolver.acme.dnschallenge.provider=ovh"
+        # - "--certificatesresolvers.myresolver.acme.caserver=https://acme-staging-v02.api.letsencrypt.org/directory"
+      - "--certificatesresolvers.myresolver.acme.email=celestin.moenne@gmail.com"
+      - "--certificatesresolvers.myresolver.acme.storage=/letsencrypt/acme.json"
     ports:
-      - 80:80
-      - 443:443
-    networks:
-      - proxy
+      - "80:80"
+      - "443:443"
+      - "8080:8080"
+    environment:
+      - OVH_ENDPOINT=${dns_ovh_endpoint}
+      - OVH_APPLICATION_KEY=${dns_ovh_application_key}
+      - OVH_APPLICATION_SECRET=${dns_ovh_application_secret}
+      - OVH_CONSUMER_KEY=${dns_ovh_consumer_key}
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - ./traefik/traefik.toml:/traefik.toml
-      - ./traefik/acme.json:/acme.json
-    container_name: traefik
+      - "./letsencrypt:/letsencrypt"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
 
-  nginx:
-    image: nginx
-    restart: always
-      #volumes:
-      #- ./site:/etc/nginx/html:ro
-      #- ./nginx/site.conf:/etc/nginx/conf.d/default.conf:ro
-      #- certs:/etc/letsencrypt:ro
+  whoami:
+    image: "traefik/whoami"
+    container_name: "simple-service"
     labels:
-      - "traefik.docker.network=proxy"
-      - "traefik.basic.frontend.rule=Host:les-bebous.fun"
-      - "traefik.basic.protocol=http"
-    networks:
-      proxy:
-
-networks:
-  proxy:
-    external: true
+      - "traefik.enable=true"
+      - "traefik.http.routers.whoami.rule=Host(`test.les-bebous.fun`)"
+      - "traefik.http.routers.whoami.entrypoints=websecure"
+      - "traefik.http.routers.whoami.tls.certresolver=myresolver"
